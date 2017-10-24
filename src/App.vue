@@ -61,7 +61,7 @@ export default {
     },
     // データベースの変更を購読、変更をlistに入れる
     listen () {
-      rootDb.on('value', snapshot => {
+      firebase.database().ref('myBoard/').on('value', snapshot => {
         if (snapshot) {
           const rootList = snapshot.val()
           let list = []
