@@ -2,64 +2,87 @@
   <div id="app">
 
     <div class="container mt24">
+
       <div class="row">
         <div class="col-xs-12">
           <button type="button" class="btn btn-default" @click="login">
             匿名ユーザーでログイン
           </button>
-        </div>
-
-        <div class="col-xs-12 mt24">
           <button type="button" class="btn btn-default" @click="pushData">
-            送信
+            ダミー送信
           </button>
         </div>
 
       </div>
+
+      <hr>
+
+      <div class="row mt24">
+        <!-- 入力欄 -->
+        <div class="col-xs-4">
+          <h3>入力</h3>
+          <div class="form-group">
+            <label for="nameInput">名前</label>
+            <input type="txt" class="form-control" id="nameInput" v-model="name">
+          </div>
+          <div class="form-group">
+            <label for="messageInput">メッセージ</label>
+            <input type="txt" class="form-control" id="messageInput" v-model="message">
+          </div>
+          <button type="button" class="btn btn-default" @click="sendMessage">
+            送信
+          </button>
+        </div>
+        <!-- リスト -->
+        <div class="col-xs-8">
+          <h3>データリスト(list)</h3>
+          <ul>
+            <li v-for="item in list">{{item.name}} / {{item.message}}</li>
+          </ul>
+        </div>
+      </div>
+
+
     </div>
 
   </div>
 </template>
 
 <script>
-// データベースのインスタンス
-const rootDb = firebase.database().ref('myBoard/')
-
 export default {
   name: 'app',
-  components: {
-
-  },
   data () {
     return {
-      list: []
+      list: [],     // 最新状態はここにコピーされる
+      name: '',     // 名前
+      message: '',  // 送信メッセージ
     }
   },
   created () {
+    // 認証チェック
     firebase.auth().onAuthStateChanged( user => {
       if (user) {
-        // User is signed in.
-        console.log('is login.')
+        console.log('ログイン状態.')
         this.listen()
       } else {
-        // No user is signed in.
-        console.log('No user is signed in.')
+        console.log('ログインしていない状態')
       }
     })
   },
   methods: {
+    // ログイン関数
     login () {
       firebase.auth().signInAnonymously().then(e => {
         console.log(e)
         this.listen()
       }).catch((error) => {
-        // エラーメッセージ
+        // ログインのエラーメッセージ
         var errorCode = error.code;
         var errorMessage = error.message;
-        console.log('エラーメッセージ', errorCode, errorMessage)
+        console.log('ログインエラーメッセージ', errorCode, errorMessage)
       });
     },
-    // データベースの変更を購読、変更をlistに入れる
+    // データベースの変更を購読、最新状態をlistにコピーする
     listen () {
       firebase.database().ref('myBoard/').on('value', snapshot => {
         if (snapshot) {
@@ -73,8 +96,21 @@ export default {
         }
       })
     },
+    sendMessage () {
+      // 空欄の場合は実行しない
+      if (!this.name || !this.message) return
+      // 送信
+      firebase.database().ref('myBoard/').push({
+        name: this.name,
+        message: this.message
+      })
+      // 送信後inputを空にする
+      this.name = ''
+      this.message = ''
+    },
+    // ダミー送信
     pushData () {
-      rootDb.push({
+      firebase.database().ref('myBoard/').push({
         name: 'test',
         message: 'foo'
       })
